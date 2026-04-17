@@ -8,15 +8,10 @@ import ChessBoard from "@/components/chess/ChessBoard";
 import GameControls from "@/components/chess/GameControls";
 import GameInfo from "@/components/chess/GameInfo";
 import PromotionDialog from "@/components/chess/PromotionDialog";
+import CoachPanel from "@/components/chess/CoachPanel";
+import { useAITutor } from "@/hooks/useAITutor";
 import { Button } from "@/components/ui/button";
-import { 
-  Moon, 
-  Sun, 
-  Globe, 
-  Settings2,
-  Volume2,
-  VolumeX
-} from "lucide-react";
+import { Moon, Sun, Globe, Settings2, Volume2, VolumeX } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -30,9 +25,11 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   // Initialize AI engine
   useChessEngine();
+  // Initialize AI Tutor Coach
+  useAITutor();
 
   // Initialize game on first load IF no moves exist and game is idle
   useEffect(() => {
@@ -82,8 +79,12 @@ export default function Home() {
             <Settings2 className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight dark:text-zinc-100">MODERN CHESS</h1>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Next.js Engine 2.0</p>
+            <h1 className="text-xl font-black tracking-tight dark:text-zinc-100">
+              MODERN CHESS
+            </h1>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Next.js Engine 2.0
+            </p>
           </div>
         </div>
 
@@ -94,7 +95,11 @@ export default function Home() {
             onClick={() => toggleSound()}
             className="rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"
           >
-            {isSoundEnabled() ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            {isSoundEnabled() ? (
+              <Volume2 className="w-5 h-5" />
+            ) : (
+              <VolumeX className="w-5 h-5" />
+            )}
           </Button>
           <Button
             variant="ghost"
@@ -103,13 +108,21 @@ export default function Home() {
             className="rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"
           >
             {mounted ? (
-              theme === "dark" ? <Sun className="w-5 h-5 transition-all" /> : <Moon className="w-5 h-5 transition-all" />
+              theme === "dark" ? (
+                <Sun className="w-5 h-5 transition-all" />
+              ) : (
+                <Moon className="w-5 h-5 transition-all" />
+              )
             ) : (
               <div className="w-5 h-5" /> // Placeholder to prevent mismatch
             )}
           </Button>
           <a href="https://github.com" target="_blank" rel="noreferrer">
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"
+            >
               <Globe className="w-5 h-5" />
             </Button>
           </a>
@@ -119,14 +132,17 @@ export default function Home() {
       {/* Game Content */}
       <div className="w-full max-w-7xl px-4 flex flex-col lg:grid lg:grid-cols-[1fr_400px] gap-8 pb-12">
         {/* Left: Board Area */}
-        <div className="flex flex-col items-center justify-center relative">
+        <div className="flex flex-col items-center justify-center relative lg:sticky lg:top-8 lg:self-start">
           <ChessBoard />
           <PromotionDialog />
         </div>
 
         {/* Right: Controls Area */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 overflow-y-auto">
           <GameInfo />
+          <div className="flex-1 min-h-0">
+            <CoachPanel />
+          </div>
           <GameControls />
         </div>
       </div>

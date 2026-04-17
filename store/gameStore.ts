@@ -48,6 +48,10 @@ interface GameState {
   // AI state
   isAIThinking: boolean;
 
+  // AI Coach state
+  coachMessages: Array<{ role: "user" | "assistant"; content: string }>;
+  isCoachThinking: boolean;
+
   // Promotion state
   pendingPromotion: { from: Square; to: Square } | null;
 
@@ -64,6 +68,9 @@ interface GameState {
   setPlayerColor: (color: PlayerColor) => void;
   flipBoard: () => void;
   setAIThinking: (thinking: boolean) => void;
+  setCoachThinking: (thinking: boolean) => void;
+  addCoachMessage: (role: "user" | "assistant", content: string) => void;
+  clearCoachMessages: () => void;
   cancelPromotion: () => void;
   startGame: () => void;
   tickTimer: () => void;
@@ -112,6 +119,13 @@ export const useGameStore = create<GameState>()(
       currentTurn: "w",
       moveHistory: [],
       capturedPieces: { w: [], b: [] },
+      coachMessages: [
+        {
+          role: "assistant",
+          content: "Hello! I'm your AI Chess Coach. I'll help you analyze your moves in real-time. Good luck!",
+        },
+      ],
+      isCoachThinking: false,
       isAIThinking: false,
       pendingPromotion: null,
       timer: {
@@ -132,6 +146,13 @@ export const useGameStore = create<GameState>()(
           moveHistory: [],
           capturedPieces: { w: [], b: [] },
           isAIThinking: false,
+          isCoachThinking: false,
+          coachMessages: [
+            {
+              role: "assistant",
+              content: "Game reset. I'm ready to analyze your new game!",
+            },
+          ],
           pendingPromotion: null,
           timer: {
             whiteTime: get().timer.initialTime,
@@ -307,6 +328,20 @@ export const useGameStore = create<GameState>()(
       setPlayerColor: (color) => set({ playerColor: color }),
       flipBoard: () => set((s) => ({ isFlipped: !s.isFlipped })),
       setAIThinking: (thinking) => set({ isAIThinking: thinking }),
+      setCoachThinking: (thinking) => set({ isCoachThinking: thinking }),
+      addCoachMessage: (role, content) =>
+        set((s) => ({
+          coachMessages: [...s.coachMessages, { role, content }],
+        })),
+      clearCoachMessages: () =>
+        set({
+          coachMessages: [
+            {
+              role: "assistant",
+              content: "Chat cleared. I'm still watching your game!",
+            },
+          ],
+        }),
       cancelPromotion: () =>
         set({
           pendingPromotion: null,
@@ -378,6 +413,7 @@ export const useGameStore = create<GameState>()(
         currentTurn: state.currentTurn,
         gameStatus: state.gameStatus,
         timer: state.timer,
+        coachMessages: state.coachMessages,
       }),
     },
   ),

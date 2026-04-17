@@ -76,6 +76,8 @@ const ChessBoard: React.FC = () => {
                 }
                 isCheck={kingSquare === squareName}
                 onClick={() => handleSquareClick(rIdx, cIdx)}
+                labelX={rIdx === 7 ? "abcdefgh"[actualCol] : undefined}
+                labelY={cIdx === 0 ? "87654321"[actualRow] : undefined}
               >
                 {piece && (
                   <Piece
