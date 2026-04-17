@@ -65,6 +65,7 @@ interface GameState {
   flipBoard: () => void;
   setAIThinking: (thinking: boolean) => void;
   cancelPromotion: () => void;
+  startGame: () => void;
   tickTimer: () => void;
   setTimerActive: (active: boolean) => void;
   resetTimer: () => void;
@@ -126,7 +127,7 @@ export const useGameStore = create<GameState>()(
           selectedSquare: null,
           validMoveSquares: [],
           lastMove: null,
-          gameStatus: "playing",
+          gameStatus: "idle",
           currentTurn: "w",
           moveHistory: [],
           capturedPieces: { w: [], b: [] },
@@ -135,10 +136,17 @@ export const useGameStore = create<GameState>()(
           timer: {
             whiteTime: get().timer.initialTime,
             blackTime: get().timer.initialTime,
-            isActive: true,
+            isActive: false,
             initialTime: get().timer.initialTime,
           },
         });
+      },
+
+      startGame: () => {
+        set((s) => ({
+          gameStatus: "playing",
+          timer: { ...s.timer, isActive: true },
+        }));
       },
 
       selectSquare: (square: Square) => {
@@ -215,7 +223,7 @@ export const useGameStore = create<GameState>()(
       },
 
       makeMove: (from: Square, to: Square, promotion?: string) => {
-        const { fen } = get();
+        const { fen, moveHistory } = get();
         const chess = new Chess(fen);
 
         try {
@@ -227,15 +235,15 @@ export const useGameStore = create<GameState>()(
 
           if (!moveResult) return false;
 
-          const newHistory = chess.history({ verbose: true });
+          const updatedHistory = [...moveHistory, moveResult];
           const newFen = chess.fen();
           const newStatus = getGameStatus(chess);
-          const capturedPieces = getCapturedPieces(newHistory);
+          const capturedPieces = getCapturedPieces(updatedHistory);
 
           set({
             fen: newFen,
             currentTurn: chess.turn() as PlayerColor,
-            moveHistory: newHistory,
+            moveHistory: updatedHistory,
             capturedPieces,
             gameStatus: newStatus,
             selectedSquare: null,
@@ -256,25 +264,31 @@ export const useGameStore = create<GameState>()(
       },
 
       undoMove: () => {
-        const { fen, gameMode, moveHistory, isAIThinking } = get();
+        const { gameMode, moveHistory, isAIThinking } = get();
         if (isAIThinking || moveHistory.length === 0) return;
-
-        const chess = new Chess(fen);
 
         // In AI mode, undo two moves (human + AI)
         const undoCount = gameMode === "ai" ? 2 : 1;
+        const updatedHistory = [...moveHistory];
         for (let i = 0; i < undoCount; i++) {
-          if (!chess.undo()) break;
+          if (updatedHistory.length > 0) {
+            updatedHistory.pop();
+          }
         }
 
-        const newHistory = chess.history({ verbose: true });
-        const lastHistoryMove = newHistory[newHistory.length - 1];
+        // Re-construct game state from history
+        const chess = new Chess();
+        for (const move of updatedHistory) {
+          chess.move(move);
+        }
+
+        const lastHistoryMove = updatedHistory[updatedHistory.length - 1];
 
         set({
           fen: chess.fen(),
           currentTurn: chess.turn() as PlayerColor,
-          moveHistory: newHistory,
-          capturedPieces: getCapturedPieces(newHistory),
+          moveHistory: updatedHistory,
+          capturedPieces: getCapturedPieces(updatedHistory),
           gameStatus: getGameStatus(chess),
           selectedSquare: null,
           validMoveSquares: [],

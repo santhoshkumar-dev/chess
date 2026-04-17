@@ -35,23 +35,28 @@ export function useChessEngine() {
 
       worker.onmessage = (e: MessageEvent<{ move: string | null }>) => {
         const { move } = e.data;
+        console.log("AI Move Received:", move);
         setAIThinking(false);
 
         if (!move) return;
 
         // Parse the SAN move to get from/to squares using chess.js
         try {
-          const chess = new Chess(useGameStore.getState().fen);
+          const currentFen = useGameStore.getState().fen;
+          const chess = new Chess(currentFen);
           const moveObj = chess.move(move);
           if (moveObj) {
-            chess.undo();
+            console.log("Executing AI Move:", moveObj);
             makeMove(
               moveObj.from as Square,
               moveObj.to as Square,
               moveObj.promotion,
             );
+          } else {
+            console.warn("AI returned move failed to execute in chess.js:", move);
           }
-        } catch {
+        } catch (err) {
+          console.error("AI Move Parsing Error:", err);
           // Fallback: try direct from/to parsing
         }
       };
@@ -102,6 +107,7 @@ export function useChessEngine() {
 
   // Trigger AI move when it's AI's turn
   useEffect(() => {
+    console.log("AI Trigger Check:", { gameMode, currentTurn, playerColor, gameStatus });
     if (
       gameMode !== "ai" ||
       currentTurn === playerColor ||
@@ -110,9 +116,16 @@ export function useChessEngine() {
       gameStatus === "draw" ||
       gameStatus === "stalemate"
     ) {
+      console.log("AI Trigger skipped: ", {
+        notAiMode: gameMode !== "ai",
+        isPlayerTurn: currentTurn === playerColor,
+        isIdle: gameStatus === "idle",
+        isGameOver: ["checkmate", "draw", "stalemate"].includes(gameStatus)
+      });
       return;
     }
 
+    console.log("AI is triggered to think...");
     setAIThinking(true);
 
     // Add a small delay to make AI "thinking" feel natural

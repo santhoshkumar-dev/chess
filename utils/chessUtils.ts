@@ -36,6 +36,16 @@ export function formatTime(seconds: number): string {
 }
 
 /**
+ * Returns the path to the high-quality SVG piece icon.
+ */
+export function getPieceIconPath(type: string, color: string): string {
+  // Mapping: color 'w' -> 'l' (light), color 'b' -> 'd' (dark)
+  const colorMap: Record<string, string> = { w: "l", b: "d" };
+  const c = colorMap[color] ?? color;
+  return `/chess_icons/Chess_${type}${c}t45.svg`;
+}
+
+/**
  * Returns the Unicode chess piece character.
  */
 export function getPieceUnicode(type: string, color: string): string {
